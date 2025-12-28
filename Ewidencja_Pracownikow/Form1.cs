@@ -41,6 +41,13 @@ namespace Ewidencja_Pracownikow
 
         private void btnDodaj_Click(object sender, EventArgs e)
         {
+            FormDodaj oknoDodawania = new FormDodaj();
+
+      
+            oknoDodawania.ShowDialog();
+
+       
+            ZaladujDane();
 
         }
 

@@ -21,6 +21,7 @@ namespace Ewidencja_Pracownikow
 
         private void btnZapisz_Click(object sender, EventArgs e)
         {
+            MessageBox.Show("Przycisk Zapisz dziala");
             try
             {
                 if (cbTypPracownika.SelectedItem == null)
@@ -85,11 +86,11 @@ namespace Ewidencja_Pracownikow
 
                 using (SqlCommand cmd = new SqlCommand(zapytanie, conn))
                 {
-                    cmd.Parameters.AddWithValue("@imie", pracownik.Imie);
-                    cmd.Parameters.AddWithValue("@nazwisko", pracownik.Nazwisko);
-                    cmd.Parameters.AddWithValue("@pesel", pracownik.Pesel);
+                    cmd.Parameters.AddWithValue("@Imie", pracownik.Imie);
+                    cmd.Parameters.AddWithValue("@Nazwisko", pracownik.Nazwisko);
+                    cmd.Parameters.AddWithValue("@Pesel", pracownik.Pesel);
 
-                    cmd.Parameters.AddWithValue("@stanowisko", idStanowiskaZazyte);
+                    cmd.Parameters.AddWithValue("@Stanowisko", idStanowiskaZazyte);
 
                     cmd.ExecuteNonQuery();
                 }

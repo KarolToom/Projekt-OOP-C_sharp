@@ -75,7 +75,7 @@
             // cbTypPracownika
             // 
             cbTypPracownika.FormattingEnabled = true;
-            cbTypPracownika.Items.AddRange(new object[] { "Kierowca", "Handlowiec" });
+            cbTypPracownika.Items.AddRange(new object[] { "Kierowca", "Handlowiec", "Pracownik biurowy", "Manager" });
             cbTypPracownika.Location = new Point(117, 83);
             cbTypPracownika.Name = "cbTypPracownika";
             cbTypPracownika.Size = new Size(257, 23);
@@ -89,7 +89,7 @@
             btnZapisz.TabIndex = 5;
             btnZapisz.Text = "Zapisz";
             btnZapisz.UseVisualStyleBackColor = true;
-            btnZapisz.Click += new EventHandler(btnZapisz_Click);
+            btnZapisz.Click += btnZapisz_Click;
             // 
             // FormDodaj
             // 
