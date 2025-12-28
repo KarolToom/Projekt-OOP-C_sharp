@@ -18,7 +18,7 @@ namespace Ewidencja_Pracownikow
 
         public abstract decimal ObliczPremie();
 
-        public decimal ObliczWynagrodzenie()
+        public virtual decimal ObliczWynagrodzenie() 
         {
             return PensjaZasadnicza + ObliczPremie();
         }
