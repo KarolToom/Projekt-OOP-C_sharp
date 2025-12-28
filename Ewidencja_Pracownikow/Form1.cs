@@ -1,7 +1,8 @@
+using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Ewidencja_Pracownikow
 {
@@ -15,17 +16,30 @@ namespace Ewidencja_Pracownikow
 
         private void ZaladujDane()
         {
+            string zapytanie = @"
+        SELECT 
+            P.IdPracownika, 
+            P.Imie, 
+            P.Nazwisko, 
+            P.PESEL, 
+            S.NazwaStanowiska AS Stanowisko,
+            D.NazwaDzialu AS Dzial
+        FROM Pracownicy P
+        INNER JOIN Stanowiska S ON P.IdStanowiska = S.IdStanowiska
+        INNER JOIN Dzialy D ON P.IdDzialu = D.IdDzialu";
+
             using (SqlConnection polaczenie = new SqlConnection(connectionString))
             {
                 try
                 {
                     polaczenie.Open();
-                    string zapytanie = "SELECT IdPracownika, Imie, Nazwisko, PESEL FROM Pracownicy";
+
                     SqlDataAdapter adapter = new SqlDataAdapter(zapytanie, polaczenie);
-                    System.Data.DataTable tabela = new System.Data.DataTable();
+                    DataTable tabela = new DataTable();
                     adapter.Fill(tabela);
 
-                    dgvPracownicy.DataSource = tabela; // To wrzuci dane prosto do tabelki w GUI!
+                    dgvPracownicy.DataSource = tabela;
+                    dgvPracownicy.Columns["NazwaStanowiska"].HeaderText = "Stanowisko";
                 }
                 catch (Exception ex)
                 {

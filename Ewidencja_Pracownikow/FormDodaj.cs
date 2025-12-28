@@ -21,22 +21,19 @@ namespace Ewidencja_Pracownikow
 
         private void btnZapisz_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Przycisk Zapisz dziala");
+
             try
             {
-                if (cbTypPracownika.SelectedItem == null)
-                {
-                    MessageBox.Show("Wybierz typ pracownika.");
-                    return;
-                }
+                if (string.IsNullOrWhiteSpace(txtImie.Text)) throw new Exception("Pole Imię jest puste!");
+
 
                 string typ = cbTypPracownika.SelectedItem.ToString();
-                Pracownik nowy = null;
-
                 string imie = txtImie.Text;
                 string nazwisko = txtNazwisko.Text;
                 string pesel = txtPESEL.Text;
                 decimal pensja = decimal.Parse(txtPensja.Text);
+
+                Pracownik nowy = null;
 
                 switch (typ)
                 {
@@ -60,6 +57,14 @@ namespace Ewidencja_Pracownikow
                     MessageBox.Show($"Dodano pracownika: {nowy.Imie} {nowy.Nazwisko}, Wynagrodzenie: {suma:C}");
                     this.Close();
                 }
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Nieprawidłowy format danych. Pensja musi być liczbą.");
+            }
+            catch (SqlException sqlEx)
+            {
+                MessageBox.Show("Błąd bazy danych: " + sqlEx.Message);
             }
             catch (Exception ex)
             {
@@ -95,6 +100,11 @@ namespace Ewidencja_Pracownikow
                     cmd.ExecuteNonQuery();
                 }
             }
+        }
+
+        private void txtPESEL_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -38,54 +38,51 @@
             // 
             // txtImie
             // 
-            txtImie.Location = new Point(85, 319);
+            txtImie.Location = new Point(85, 101);
             txtImie.Name = "txtImie";
-            txtImie.Size = new Size(100, 23);
+            txtImie.Size = new Size(223, 23);
             txtImie.TabIndex = 0;
             txtImie.Text = "Imie";
-            txtImie.TextAlign = HorizontalAlignment.Center;
             // 
             // txtNazwisko
             // 
-            txtNazwisko.Location = new Point(208, 319);
+            txtNazwisko.Location = new Point(85, 139);
             txtNazwisko.Name = "txtNazwisko";
-            txtNazwisko.Size = new Size(100, 23);
+            txtNazwisko.Size = new Size(223, 23);
             txtNazwisko.TabIndex = 1;
             txtNazwisko.Text = "Nazwisko";
-            txtNazwisko.TextAlign = HorizontalAlignment.Center;
             // 
             // txtPESEL
             // 
-            txtPESEL.Location = new Point(314, 319);
+            txtPESEL.Location = new Point(85, 183);
             txtPESEL.Name = "txtPESEL";
-            txtPESEL.Size = new Size(100, 23);
+            txtPESEL.Size = new Size(223, 23);
             txtPESEL.TabIndex = 2;
             txtPESEL.Text = "PESEL";
-            txtPESEL.TextAlign = HorizontalAlignment.Center;
+            txtPESEL.TextChanged += txtPESEL_TextChanged;
             // 
             // txtPensja
             // 
-            txtPensja.Location = new Point(420, 319);
+            txtPensja.Location = new Point(85, 225);
             txtPensja.Name = "txtPensja";
-            txtPensja.Size = new Size(100, 23);
+            txtPensja.Size = new Size(223, 23);
             txtPensja.TabIndex = 3;
             txtPensja.Text = "Pensja";
-            txtPensja.TextAlign = HorizontalAlignment.Center;
             // 
             // cbTypPracownika
             // 
             cbTypPracownika.FormattingEnabled = true;
             cbTypPracownika.Items.AddRange(new object[] { "Kierowca", "Handlowiec", "Pracownik biurowy", "Manager" });
-            cbTypPracownika.Location = new Point(117, 83);
+            cbTypPracownika.Location = new Point(85, 51);
             cbTypPracownika.Name = "cbTypPracownika";
-            cbTypPracownika.Size = new Size(257, 23);
+            cbTypPracownika.Size = new Size(512, 23);
             cbTypPracownika.TabIndex = 4;
             // 
             // btnZapisz
             // 
-            btnZapisz.Location = new Point(443, 87);
+            btnZapisz.Location = new Point(630, 51);
             btnZapisz.Name = "btnZapisz";
-            btnZapisz.Size = new Size(75, 23);
+            btnZapisz.Size = new Size(133, 23);
             btnZapisz.TabIndex = 5;
             btnZapisz.Text = "Zapisz";
             btnZapisz.UseVisualStyleBackColor = true;
