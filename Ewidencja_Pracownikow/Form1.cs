@@ -1,7 +1,10 @@
 using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
+using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace Ewidencja_Pracownikow
 {
@@ -15,46 +18,85 @@ namespace Ewidencja_Pracownikow
         }
 
 
-        private void ZaladujDane()
+        private void ZaladujDane(string sortowanie = "Nazwisko")
         {
-            string zapytanie = @"
-        SELECT 
-            P.IdPracownika, 
-            P.Imie, 
-            P.Nazwisko, 
-            P.PESEL, 
-            S.NazwaStanowiska AS Stanowisko,
-            D.NazwaDzialu AS Dzial
-        FROM Pracownicy P
-        INNER JOIN Stanowiska S ON P.IdStanowiska = S.IdStanowiska
-        INNER JOIN Dzialy D ON P.IdDzialu = D.IdDzialu";
+            List<Pracownik> listaObiektowa = new List<Pracownik>();
 
-            using (SqlConnection polaczenie = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                try
+                conn.Open();
+                string query = @"SELECT P.Imie, P.Nazwisko, P.PESEL, S.Nazwa as Stanowisko, 
+                 W.SumaCalkowita as Pensja, W.ParametrLiczbowy1, W.ParametrLiczbowy2 
+                 FROM Pracownicy P 
+                 JOIN Stanowiska S ON P.IdStanowiska = S.IdStanowiska
+                 LEFT JOIN Wynagrodzenia W ON P.IdPracownika = W.IdPracownika";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader reader = cmd.ExecuteReader();
+
+                while (reader.Read())
                 {
-                    polaczenie.Open();
+                    string imie = reader["Imie"].ToString();
+                    string nazwisko = reader["Nazwisko"].ToString();
+                    string pesel = reader["PESEL"].ToString();
+                    string stanowisko = reader["Stanowisko"].ToString();
+                    decimal pensja = reader["Pensja"] != DBNull.Value ? Convert.ToDecimal(reader["Pensja"]) : 0;
+                    decimal p1 = reader["ParametrLiczbowy1"] != DBNull.Value ? Convert.ToDecimal(reader["ParametrLiczbowy1"]) : 0;
+                    decimal p2 = reader["ParametrLiczbowy2"] != DBNull.Value ? Convert.ToDecimal(reader["ParametrLiczbowy2"]) : 0;
 
-                    SqlDataAdapter adapter = new SqlDataAdapter(zapytanie, polaczenie);
-                    DataTable tabela = new DataTable();
-                    adapter.Fill(tabela);
-
-                    dgvPracownicy.DataSource = tabela;
-                    dgvPracownicy.Columns["IdPracownika"].HeaderText = "ID";
-                    dgvPracownicy.Columns["IdPracownika"].Width = 40;
-                    dgvPracownicy.Columns["Imie"].HeaderText = "Imiê";
-                    dgvPracownicy.Columns["Nazwisko"].HeaderText = "Nazwisko";
-                    dgvPracownicy.Columns["PESEL"].HeaderText = "PESEL";
-                    dgvPracownicy.Columns["Stanowisko"].Width = 120;
-
-                    dgvPracownicy.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("B³¹d po³¹czenia: " + ex.Message);
+                    if (stanowisko == "Kierowca")
+                        listaObiektowa.Add(new Kierowca(imie, nazwisko, pesel, pensja, (int)p1, p2));
+                    else if (stanowisko == "Handlowiec")
+                        listaObiektowa.Add(new Handlowiec(imie, nazwisko, pesel, pensja, p1, p2));
+                    else if (stanowisko == "Manager")
+                        listaObiektowa.Add(new Manager(imie, nazwisko, pesel, pensja, p1, p2));
+                    else
+                        listaObiektowa.Add(new PracownikBiurowy(imie, nazwisko, pesel, pensja, p1));
                 }
             }
+            // Podpinamy listê obiektów do Grida
+            var querySort = listaObiektowa.Select(p => new
+            {
+                // U¿ywamy Imiê, Nazwisko, PESEL z klasy Osoba
+                Imiê = p.Imie,
+                Nazwisko = p.Nazwisko,
+                PESEL = p.Pesel, // Upewnij siê, ¿e w klasie Osoba masz 'Pesel'
+                Stanowisko = p.GetType().Name,
+                Pensja_Zasadnicza = p.PensjaZasadnicza,
+
+                // Mapowanie parametrów dla SelectionChanged
+                Parametr1 = p is Kierowca ? (p as Kierowca).PrzejechaneKilometry :
+                    p is Handlowiec ? (p as Handlowiec).WartoscSprzedazy :
+                    p is PracownikBiurowy ? (p as PracownikBiurowy).DodatekStazowy : 0,
+
+                Parametr2 = p is Kierowca ? (p as Kierowca).StawkaZaKilometr :
+                    p is Handlowiec ? (p as Handlowiec).ProcentProwizji :
+                    p is Manager ? (p as Manager).PremiaMenadzerska : 0,
+
+                // Wykorzystanie polimorfizmu do obliczeñ
+                Premia = p.ObliczPremie(),
+                Suma = p.ObliczWynagrodzenie()
+            });
+
+            // --- LOGIKA SORTOWANIA (LINQ) ---
+            if (sortowanie == "Nazwisko")
+                querySort = querySort.OrderBy(x => x.Nazwisko);
+            else if (sortowanie == "Pensja")
+                querySort = querySort.OrderByDescending(x => x.Pensja_Zasadnicza);
+            else if (sortowanie == "Premia")
+                querySort = querySort.OrderByDescending(x => x.Premia);
+            else if (sortowanie == "Suma")
+                querySort = querySort.OrderByDescending(x => x.Suma);
+
+            // Na samym koñcu podpinamy gotow¹, posortowan¹ listê do Grida
+            dgvPracownicy.DataSource = querySort.ToList();
+
+            dgvPracownicy.Columns["Pensja_Zasadnicza"].HeaderText = "Pensja zasadnicza";
+
+            dgvPracownicy.ReadOnly = true;
         }
+
+
 
         private void dgvPracownicy_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -76,55 +118,64 @@ namespace Ewidencja_Pracownikow
         {
             if (dgvPracownicy.CurrentRow != null)
             {
-
-                int id = (int)dgvPracownicy.CurrentRow.Cells["IdPracownika"].Value;
+                // Pobieramy dane do potwierdzenia i ID do usuniêcia
+                // Upewnij siê, ¿e kolumna w Gridzie nazywa siê "IdPracownika" lub pobierz j¹ po PESEL
+                string imie = dgvPracownicy.CurrentRow.Cells["Imiê"].Value.ToString();
                 string nazwisko = dgvPracownicy.CurrentRow.Cells["Nazwisko"].Value.ToString();
+                string pesel = dgvPracownicy.CurrentRow.Cells["PESEL"].Value.ToString();
 
-                var dialog = MessageBox.Show($"Czy na pewno usun¹æ pracownika {nazwisko}?", "PotwierdŸ", MessageBoxButtons.YesNo);
-                if (dialog == DialogResult.Yes)
+                var potwierdzenie = MessageBox.Show($"Czy na pewno chcesz usun¹æ pracownika {imie} {nazwisko} (PESEL: {pesel}) oraz wszystkie jego dane finansowe?",
+                                                    "Potwierdzenie usuniêcia",
+                                                    MessageBoxButtons.YesNo,
+                                                    MessageBoxIcon.Warning);
+
+                if (potwierdzenie == DialogResult.Yes)
                 {
                     try
                     {
                         using (SqlConnection conn = new SqlConnection(connectionString))
                         {
                             conn.Open();
-                            string sql = "DELETE FROM Pracownicy WHERE IdPracownika = @id";
-                            SqlCommand cmd = new SqlCommand(sql, conn);
-                            cmd.Parameters.AddWithValue("@id", id);
-                            cmd.ExecuteNonQuery();
+                            // U¿ywamy transakcji, bo usuwamy z dwóch tabel
+                            SqlTransaction trans = conn.BeginTransaction();
+
+                            try
+                            {
+                                // 1. Najpierw usuwamy z tabeli Wynagrodzenia (Klucz obcy!)
+                                string sqlW = @"DELETE FROM Wynagrodzenia 
+                                        WHERE IdPracownika = (SELECT IdPracownika FROM Pracownicy WHERE PESEL = @pesel)";
+                                SqlCommand cmdW = new SqlCommand(sqlW, conn, trans);
+                                cmdW.Parameters.AddWithValue("@pesel", pesel);
+                                cmdW.ExecuteNonQuery();
+
+                                // 2. Potem usuwamy z tabeli Pracownicy
+                                string sqlP = "DELETE FROM Pracownicy WHERE PESEL = @pesel";
+                                SqlCommand cmdP = new SqlCommand(sqlP, conn, trans);
+                                cmdP.Parameters.AddWithValue("@pesel", pesel);
+                                cmdP.ExecuteNonQuery();
+
+                                trans.Commit();
+                                MessageBox.Show("Pracownik zosta³ pomyœlnie usuniêty z systemu.");
+                            }
+                            catch (Exception ex)
+                            {
+                                trans.Rollback();
+                                throw new Exception("B³¹d podczas usuwania z bazy: " + ex.Message);
+                            }
                         }
+                        // Odœwie¿amy widok
                         ZaladujDane();
                     }
-                    catch (Exception ex) { MessageBox.Show(ex.Message); }
-                }
-            }
-        }
-
-        private void btnZapiszZmiany_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (dgvPracownicy.CurrentRow != null)
-                {
-                    int id = (int)dgvPracownicy.CurrentRow.Cells["IdPracownika"].Value;
-                    string imie = dgvPracownicy.CurrentRow.Cells["Imie"].Value.ToString();
-                    string nazwisko = dgvPracownicy.CurrentRow.Cells["Nazwisko"].Value.ToString();
-
-                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    catch (Exception ex)
                     {
-                        conn.Open();
-                        string sql = "UPDATE Pracownicy SET Imie=@imie, Nazwisko=@nazwisko WHERE IdPracownika=@id";
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@imie", imie);
-                        cmd.Parameters.AddWithValue("@nazwisko", nazwisko);
-                        cmd.Parameters.AddWithValue("@id", id);
-                        cmd.ExecuteNonQuery();
+                        MessageBox.Show(ex.Message);
                     }
-                    MessageBox.Show("Dane zaktualizowane!");
-                    ZaladujDane();
                 }
             }
-            catch (Exception ex) { MessageBox.Show("B³¹d edycji: " + ex.Message); }
+            else
+            {
+                MessageBox.Show("Proszê najpierw zaznaczyæ pracownika w tabeli.");
+            }
         }
 
         private void btnImport_Click(object sender, EventArgs e)
@@ -140,13 +191,13 @@ namespace Ewidencja_Pracownikow
 
                 try
                 {
-                    string[] linie = System.IO.File.ReadAllLines(ofd.FileName);
+                    string[] linie = File.ReadAllLines(ofd.FileName);
 
                     for (int i = 1; i < linie.Length; i++)
                     {
                         try
                         {
-                            string[] dane = linie[i].Split(';'); // Rozdzielamy œrednikiem
+                            string[] dane = linie[i].Split(';');
 
                             if (dane.Length < 5) { bledy++; continue; }
 
@@ -154,7 +205,7 @@ namespace Ewidencja_Pracownikow
                             string nazwisko = dane[1];
                             string pesel = dane[2];
                             decimal pensja = decimal.Parse(dane[3]);
-                            string stanowisko = dane[4];
+                            string stanowiskoZPliku = dane[4].Trim();
 
                             if (CzyPeselIstnieje(pesel))
                             {
@@ -162,17 +213,29 @@ namespace Ewidencja_Pracownikow
                                 continue;
                             }
 
-                            int idStanowiska = 1; // domyœlnie Kierowca
-                            if (stanowisko == "Handlowiec") idStanowiska = 2;
-                            else if (stanowisko == "Manager") idStanowiska = 3;
+                            int idStanowiska = 1;
+                            if (stanowiskoZPliku == "Handlowiec") idStanowiska = 2;
+                            else if (stanowiskoZPliku == "Manager") idStanowiska = 3;
+                            else if (stanowiskoZPliku == "Pracownik Biurowy") idStanowiska = 4;
 
-                        
-                            ZapiszDoBazyZImportu(imie, nazwisko, pesel, pensja, idStanowiska);
+                            int idDzialu = 1; // Domyœlnie Transport
+
+                            if (stanowiskoZPliku == "Handlowiec")
+                            {
+                                idDzialu = 2; // Sprzeda¿
+                            }
+                            else if (stanowiskoZPliku == "Pracownik Biurowy" || stanowiskoZPliku == "Manager")
+                            {
+                                idDzialu = 3; // Administracja
+                            }
+
+
+                            ZapiszDoBazyZImportu(imie, nazwisko, pesel, pensja, idDzialu, idStanowiska);
                             dodano++;
                         }
                         catch (Exception)
                         {
-                            bledy++; // Np. b³¹d parsowania liczby lub walidacja klasy Osoba
+                            bledy++;
                         }
                     }
                     ZaladujDane();
@@ -197,20 +260,53 @@ namespace Ewidencja_Pracownikow
             }
         }
 
-        private void ZapiszDoBazyZImportu(string i, string n, string p, decimal pensja, int idS)
+        private void ZapiszDoBazyZImportu(string imie, string nazwisko, string pesel, decimal pensja, int idDzialu, int idStanowiska)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string sql = "INSERT INTO Pracownicy (Imie, Nazwisko, PESEL, PensjaPodstawowa, IdDzialu, IdStanowiska) " +
-                             "VALUES (@i, @n, @p, @pensja, 1, @idS)";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@i", i);
-                cmd.Parameters.AddWithValue("@n", n);
-                cmd.Parameters.AddWithValue("@p", p);
-                cmd.Parameters.AddWithValue("@pensja", pensja);
-                cmd.Parameters.AddWithValue("@idS", idS);
-                cmd.ExecuteNonQuery();
+
+                SqlTransaction transakcja = conn.BeginTransaction();
+
+                try
+                {
+
+                    string sqlPracownik = @"
+                INSERT INTO Pracownicy (Imie, Nazwisko, PESEL, IdDzialu, IdStanowiska) 
+                VALUES (@imie, @nazwisko, @pesel, @idDzialu, @idStanowiska);
+                SELECT SCOPE_IDENTITY();";
+
+                    SqlCommand cmdP = new SqlCommand(sqlPracownik, conn, transakcja);
+                    cmdP.Parameters.AddWithValue("@imie", imie);
+                    cmdP.Parameters.AddWithValue("@nazwisko", nazwisko);
+                    cmdP.Parameters.AddWithValue("@pesel", pesel);
+                    cmdP.Parameters.AddWithValue("@idDzialu", idDzialu);
+                    cmdP.Parameters.AddWithValue("@idStanowiska", idStanowiska);
+
+
+                    int noweIdPracownika = Convert.ToInt32(cmdP.ExecuteScalar());
+
+
+                    string sqlWynagrodzenie = @"
+                INSERT INTO Wynagrodzenia (IdPracownika, DataObliczenia, SumaCalkowita) 
+                VALUES (@idPracownik, @data, @suma)";
+
+                    SqlCommand cmdW = new SqlCommand(sqlWynagrodzenie, conn, transakcja);
+                    cmdW.Parameters.AddWithValue("@idPracownik", noweIdPracownika);
+                    cmdW.Parameters.AddWithValue("@data", DateTime.Now);
+                    cmdW.Parameters.AddWithValue("@suma", pensja);
+
+                    cmdW.ExecuteNonQuery();
+
+
+                    transakcja.Commit();
+                }
+                catch (Exception ex)
+                {
+
+                    transakcja.Rollback();
+                    throw ex;
+                }
             }
         }
 
@@ -224,7 +320,7 @@ namespace Ewidencja_Pracownikow
             {
                 try
                 {
-                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter(sfd.FileName, false, System.Text.Encoding.UTF8))
+                    using (StreamWriter sw = new StreamWriter(sfd.FileName, false, System.Text.Encoding.UTF8))
                     {
                         string naglowki = "";
                         for (int i = 0; i < dgvPracownicy.Columns.Count; i++)
@@ -233,7 +329,7 @@ namespace Ewidencja_Pracownikow
                         }
                         sw.WriteLine(naglowki);
 
-                        
+
                         foreach (DataGridViewRow row in dgvPracownicy.Rows)
                         {
                             if (!row.IsNewRow)
@@ -241,7 +337,7 @@ namespace Ewidencja_Pracownikow
                                 string linia = "";
                                 for (int i = 0; i < dgvPracownicy.Columns.Count; i++)
                                 {
-                                    
+
                                     string wartosc = row.Cells[i].Value?.ToString() ?? "";
                                     linia += wartosc + (i < dgvPracownicy.Columns.Count - 1 ? ";" : "");
                                 }
@@ -263,9 +359,78 @@ namespace Ewidencja_Pracownikow
             ZaladujDane();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void dgvPracownicy_SelectionChanged(object sender, EventArgs e)
         {
+            if (dgvPracownicy.CurrentRow != null)
+            {
+                // Pobieramy nazwê stanowiska z kolumny "Stanowisko" (upewnij siê, ¿e taka nazwa jest w Gridzie)
+                string stanowisko = dgvPracownicy.CurrentRow.Cells["Stanowisko"].Value.ToString();
 
+                // Odwo³ujemy siê do kolumn, które przechowuj¹ dane do premii
+                // Zak³adamy, ¿e nazywaj¹ siê one w Gridzie "Parametr1" i "Parametr2"
+                var col1 = dgvPracownicy.Columns["Parametr1"];
+                var col2 = dgvPracownicy.Columns["Parametr2"];
+
+                if (col1 == null || col2 == null) return;
+
+                switch (stanowisko)
+                {
+                    case "Kierowca":
+                        col1.HeaderText = "Kilometry";
+                        col2.HeaderText = "Stawka za km";
+                        col2.Visible = true;
+                        break;
+                    case "Handlowiec":
+                        col1.HeaderText = "Wartoœæ sprzeda¿y";
+                        col2.HeaderText = "Prowizja (%)";
+                        col2.Visible = true;
+                        break;
+                    case "Manager":
+                        col1.HeaderText = "Dodatek sta¿owy";
+                        col2.HeaderText = "Premia Menad¿era";
+                        col2.Visible = true;
+                        break;
+                    case "Pracownik Biurowy":
+                        col1.HeaderText = "Dodatek sta¿owy";
+                        col2.HeaderText = "-";
+                        col2.Visible = false; // Pracownik biurowy ma tylko jeden parametr
+                        break;
+                }
+            }
+        }
+
+        private void cmbSortowanie_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ZaladujDane(cmbSortowanie.SelectedItem.ToString());
+        }
+
+        private void btnEdytuj_Click(object sender, EventArgs e)
+        {
+            if (dgvPracownicy.CurrentRow != null)
+            {
+                // 1. Pobieramy ID zaznaczonego pracownika
+                // Upewnij siê, ¿e kolumna z ID nie jest ukryta lub jest dostêpna w obiekcie
+                // Najbezpieczniej pobraæ PESEL i znaleŸæ ID, albo dodaæ IdPracownika do obiektu anonimowego w ZaladujDane
+                string pesel = dgvPracownicy.CurrentRow.Cells["PESEL"].Value.ToString();
+                int idDoEdycji = PobierzIdPoPeselu(pesel); // Trzeba dopisaæ ma³¹ metodê pomocnicz¹
+
+                // 2. Otwieramy FormDodaj w trybie EDYCJI (przekazujemy ID)
+                FormDodaj oknoEdycji = new FormDodaj(idDoEdycji);
+                if (oknoEdycji.ShowDialog() == DialogResult.OK)
+                {
+                    ZaladujDane(); // Odœwie¿amy listê po zamkniêciu okna
+                }
+            }
+        }
+        private int PobierzIdPoPeselu(string pesel)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                SqlCommand cmd = new SqlCommand("SELECT IdPracownika FROM Pracownicy WHERE PESEL = @p", conn);
+                cmd.Parameters.AddWithValue("@p", pesel);
+                return (int)cmd.ExecuteScalar();
+            }
         }
     }
 }

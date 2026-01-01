@@ -34,6 +34,10 @@
             txtPensja = new TextBox();
             cbTypPracownika = new ComboBox();
             btnZapisz = new Button();
+            lblParametr1 = new Label();
+            lblParametr2 = new Label();
+            txtParametr1 = new TextBox();
+            txtParametr2 = new TextBox();
             SuspendLayout();
             // 
             // txtImie
@@ -77,6 +81,7 @@
             cbTypPracownika.Name = "cbTypPracownika";
             cbTypPracownika.Size = new Size(512, 23);
             cbTypPracownika.TabIndex = 4;
+            cbTypPracownika.SelectedIndexChanged += cbTypPracownika_SelectedIndexChanged;
             // 
             // btnZapisz
             // 
@@ -88,11 +93,51 @@
             btnZapisz.UseVisualStyleBackColor = true;
             btnZapisz.Click += btnZapisz_Click;
             // 
+            // lblParametr1
+            // 
+            lblParametr1.AutoSize = true;
+            lblParametr1.Location = new Point(398, 104);
+            lblParametr1.Name = "lblParametr1";
+            lblParametr1.Size = new Size(61, 15);
+            lblParametr1.TabIndex = 6;
+            lblParametr1.Text = "Parametr1";
+            lblParametr1.Click += label1_Click;
+            // 
+            // lblParametr2
+            // 
+            lblParametr2.AutoSize = true;
+            lblParametr2.Location = new Point(398, 142);
+            lblParametr2.Name = "lblParametr2";
+            lblParametr2.Size = new Size(61, 15);
+            lblParametr2.TabIndex = 7;
+            lblParametr2.Text = "Parametr2";
+            // 
+            // txtParametr1
+            // 
+            txtParametr1.Location = new Point(516, 101);
+            txtParametr1.Name = "txtParametr1";
+            txtParametr1.Size = new Size(100, 23);
+            txtParametr1.TabIndex = 8;
+            txtParametr1.Visible = false;
+            // 
+            // txtParametr2
+            // 
+            txtParametr2.Location = new Point(516, 139);
+            txtParametr2.Name = "txtParametr2";
+            txtParametr2.Size = new Size(100, 23);
+            txtParametr2.TabIndex = 9;
+            txtParametr2.Visible = false;
+            txtParametr2.TextChanged += txtParametr2_TextChanged;
+            // 
             // FormDodaj
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(txtParametr2);
+            Controls.Add(txtParametr1);
+            Controls.Add(lblParametr2);
+            Controls.Add(lblParametr1);
             Controls.Add(btnZapisz);
             Controls.Add(cbTypPracownika);
             Controls.Add(txtPensja);
@@ -113,5 +158,9 @@
         private TextBox txtPensja;
         private ComboBox cbTypPracownika;
         private Button btnZapisz;
+        private Label lblParametr1;
+        private Label lblParametr2;
+        private TextBox txtParametr1;
+        private TextBox txtParametr2;
     }
 }
