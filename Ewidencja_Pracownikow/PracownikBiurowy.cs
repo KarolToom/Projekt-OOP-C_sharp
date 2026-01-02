@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public class PracownikBiurowy : Pracownik
+    public class PracownikBiurowy : Pracownik // Klasa dziedzicząca po klasie bazowej Pracownik
     {
         public decimal DodatekStazowy { get; set; }
 

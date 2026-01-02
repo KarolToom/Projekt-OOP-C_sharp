@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public class Handlowiec : Pracownik
+    public class Handlowiec : Pracownik // Klasa dziedzicząca po klasie Pracownik
     {
         public decimal WartoscSprzedazy { get; set; }
         public decimal ProcentProwizji { get; set; }

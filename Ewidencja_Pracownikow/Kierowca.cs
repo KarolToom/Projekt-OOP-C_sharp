@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public class Kierowca : Pracownik
+    public class Kierowca : Pracownik // Klasa dziedzicząca po klasie Pracownik
     {
         public int PrzejechaneKilometry { get; set; }
         public decimal StawkaZaKilometr { get; set; }

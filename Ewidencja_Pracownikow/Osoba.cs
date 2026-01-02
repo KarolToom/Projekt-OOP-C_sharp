@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public abstract class Osoba
+    public abstract class Osoba // Klasa bazowa reprezentująca osobę
     {
         private string _imie;
         private string _nazwisko;
@@ -43,14 +43,14 @@ namespace Ewidencja_Pracownikow
             }
         }
 
-        protected Osoba(string imie, string nazwisko, string pesel)
+        protected Osoba(string imie, string nazwisko, string pesel) // Konstruktor klasy Osoba
         {
             Imie = imie;
             Nazwisko = nazwisko;
             Pesel = pesel;
         }
 
-        public virtual string WyswietlDane()
+        public virtual string WyswietlDane() // Metoda do wyświetlania danych osoby
         {
             return $"Imię: {Imie}, Nazwisko: {Nazwisko}, PESEL: {Pesel}";
         }

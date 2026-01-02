@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public class Manager : PracownikBiurowy
+    public class Manager : PracownikBiurowy // Klasa dziedzicząca po klasie PracownikBiurowy
     {
         public decimal PremiaMenadzerska { get; set; }
         public Manager(string imie, string nazwisko, string pesel, decimal pensja, decimal dodatekStazowy, decimal premiaMenadzerska)

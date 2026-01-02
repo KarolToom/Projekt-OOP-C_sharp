@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ewidencja_Pracownikow
 {
-    public abstract class Pracownik:Osoba
+    public abstract class Pracownik: Osoba // Klasa bazowa dla różnych typów pracowników
     {
         public decimal PensjaZasadnicza { get; set; }
 
